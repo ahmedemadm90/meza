@@ -57,7 +57,7 @@ class WelcomeScreen extends StatelessWidget {
                                 textColor: Colors.white,
                                 background: HexColor('129399'),
                                 function: () {
-                                  navigateTo(context, LoginScreen());
+                                  navigateAndReplace(context, LoginScreen());
                                 },
                                 isUpperCase: true,
                                 text: 'تسجيل الدخول الي حسابك'),
@@ -73,7 +73,7 @@ class WelcomeScreen extends StatelessWidget {
                             child: defaultBtn(
                               background: Colors.white,
                               function: () {
-                                navigateTo(context, RegisterScreen());
+                                navigateAndReplace(context, RegisterScreen());
                               },
                               isUpperCase: true,
                               text: 'تسجيل حساب جديد',

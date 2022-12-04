@@ -59,9 +59,18 @@ class CategoryScreen extends StatelessWidget {
                                   width: 100.w,
                                   height: 75.h,
                                   child: Center(
-                                    child: Text(
-                                      'لاتوجد اي منتجات بهذا القسم',
-                                      style: TextStyle(fontSize: 20.sp),
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          'لاتوجد اي منتجات بهذا القسم',
+                                          style: TextStyle(fontSize: 20.sp),
+                                        ),
+                                        Image(image: AssetImage('assets/images/404.png')),
+                                        defaultBtn(function: (){
+                                          Navigator.pop(context);
+                                        }, isUpperCase: true, text: 'الرجوع',textColor: Colors.white,width: 25.w,background: HexColor('129399'))
+                                      ],
                                     ),
                                   ),
                                 )),

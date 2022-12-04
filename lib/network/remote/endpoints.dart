@@ -15,3 +15,4 @@ const MYCART = 'myCart';
 const CHECKOUT = 'checkout';
 const BRANDS = 'brands';
 const BRANDBYID = 'showBrand/';
+const NOTIFICATIONS = 'notification/';

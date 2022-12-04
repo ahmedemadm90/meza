@@ -1,12 +1,18 @@
+import 'dart:io';
+
+import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:meza/models/bill_model.dart';
 import 'package:meza/models/cart_model.dart';
 import 'package:meza/models/categories_model.dart';
 import 'package:meza/models/category_products_model.dart';
+import 'package:meza/models/notification_model.dart';
 import 'package:meza/models/user_model.dart';
+import 'package:meza/modules/cart_screen.dart';
 import 'package:meza/modules/myaccount_screen.dart';
 import 'package:meza/modules/mybills_screen.dart';
 import 'package:meza/modules/notifications_screen.dart';
@@ -20,13 +26,14 @@ import 'package:meza/shared/cubit/states.dart';
 class MezaAppCubit extends Cubit<MezaAppStates> {
   MezaAppCubit() : super(MezaAppInitialState());
   static MezaAppCubit get(context) => BlocProvider.of(context);
-  int currentindex = 3;
+  int currentindex = 4;
   bool isShown = true;
   bool isPassword = true;
   IconData suffix = Icons.visibility_outlined;
   List<Widget> screens = [
     ProfileScreen(),
     BillsScreen(),
+    MyCartScrren(),
     NotificationsScreen(),
     ProductsScrren()
   ];
@@ -39,32 +46,51 @@ class MezaAppCubit extends Cubit<MezaAppStates> {
 
   UserModel? userModel;
   void userRegister({
-    required String shop_name,
+    required String shopName,
     required String phone,
     required String country,
     required String city,
     required String region,
     required String address,
     required String password,
+    required File? image,
   }) {
     emit(RegisterLoadingState());
     DioHelper.postData(url: REGISTER, data: {
-      'shop_name': shop_name,
+      'shop_name': shopName,
       'phone': phone,
       'country': country,
       'city': city,
       'region': region,
       'address': address,
       'password': password,
+      'image': image,
     }).then((value) {
       emit(RegisterSuccessState());
       userModel = UserModel.fromJson(value.data);
       showToast(msg: '${userModel!.message}', state: ToastStates.SUCCESS);
     }).catchError((error) {
-      emit(RegisterErrorState());
       print(error.toString());
+      emit(RegisterErrorState());
+
     });
   }
+  Image? storeImage;
+  var imagePicker = ImagePicker();
+  Future getStoreImage() async {
+    final pickedFile = await imagePicker.pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      storeImage = Image.file(File(pickedFile.path));
+      emit(GetStoreImageSuccessState());
+    } else {
+      print('no image selected');
+      emit(GetStoreImageErrorState());
+    }
+  }
+
+
+
+
 
   CategoriesModel? categoriesModel;
   List categories = [];
@@ -77,7 +103,6 @@ class MezaAppCubit extends Cubit<MezaAppStates> {
     emit(GetDataLoadingState());
     DioHelper.getData(url: CATEGORIES).then((value) {
       emit(GetDataSuccessState());
-      myCart();
       categoriesModel = CategoriesModel.fromJson(value.data);
       categoriesModel!.categories!.forEach((category) {
         categories.add(category);
@@ -96,11 +121,14 @@ class MezaAppCubit extends Cubit<MezaAppStates> {
     emit(ChangeBottomNavbarState());
   }
 
+  List orders = [];
   void userLogin({
     required String phone,
     required String password,
   }) {
     emit(LoginLoadingState());
+    orders = [];
+    currentindex = 4;
     DioHelper.postData(url: LOGIN, data: {
       'phone': phone,
       'password': password,
@@ -110,7 +138,11 @@ class MezaAppCubit extends Cubit<MezaAppStates> {
           emit(LoginErrorState());
           showToast(msg: '${value.data['message']}', state: ToastStates.ERROR);
         } else {
+          userModel = UserModel.fromJson(value.data);
           emit(LoginSuccessState());
+          userModel!.data!.order!.forEach((element) {
+            orders.add(element);
+          });
           showToast(
               msg: '${value.data['message']}', state: ToastStates.SUCCESS);
           userModel = UserModel.fromJson(value.data);
@@ -118,6 +150,8 @@ class MezaAppCubit extends Cubit<MezaAppStates> {
               key: 'shop_name', value: userModel!.data!.shop_name);
           CacheHelper.saveData(key: 'phone', value: userModel!.data!.phone);
           CacheHelper.saveData(key: 'token', value: userModel!.data!.token);
+          myCart();
+          getNotifications(token: CacheHelper.getData('token'));
         }
       } else {
         emit(LoginErrorState());
@@ -180,7 +214,6 @@ class MezaAppCubit extends Cubit<MezaAppStates> {
     });
   }
 
-
   void addToCart({
     required int product_id,
     required String quantity,
@@ -196,20 +229,20 @@ class MezaAppCubit extends Cubit<MezaAppStates> {
       print('done');
     }).catchError((e) {
       emit(AddToCartErrorState());
-      showToast(msg: 'حدث خطأ ما برجاء المحاولة فيما بعد', state: ToastStates.ERROR);
+      showToast(
+          msg: 'حدث خطأ ما برجاء المحاولة فيما بعد', state: ToastStates.ERROR);
       print(e.toString());
     });
   }
-
 
   void updateCart({
     required int cart_id,
     required String quantity,
   }) {
     emit(UpdateCartLoadingState());
-    DioHelper.postData(url:UPDATECART, data: {
+    DioHelper.postData(url: UPDATECART, data: {
       'cart_id': cart_id,
-      'quantity':quantity,
+      'quantity': quantity,
     }).then((value) {
       emit(UpdateCartSuccessState());
       myCart();
@@ -243,7 +276,9 @@ class MezaAppCubit extends Cubit<MezaAppStates> {
   void getCategoryProducts({required int catId}) {
     catProducts = [];
     emit(GetCategoryProductsLoadingState());
-    DioHelper.getData(url: 'https://meza.meeza-app.com/api/v1/showBrand/${catId}').then((value) {
+    DioHelper.getData(
+            url: 'https://meza.meeza-app.com/api/v1/showBrand/${catId}')
+        .then((value) {
       emit(GetCategoryProductsSuccessState());
       categoryProductsModel = CategoryProductsModel.fromJson(value.data);
       categoryProductsModel!.data!.products!.forEach((product) {
@@ -255,7 +290,6 @@ class MezaAppCubit extends Cubit<MezaAppStates> {
     });
   }
 
-
   BillModel? billModel;
   void checkOut() {
     emit(CheckOutLoadingState());
@@ -266,6 +300,28 @@ class MezaAppCubit extends Cubit<MezaAppStates> {
     }).catchError((e) {
       myCart();
       emit(CheckOutErrorState());
+      print(e.toString());
+    });
+  }
+
+  NotificationModel? notificationModel;
+  List notifications = [];
+
+  void getNotifications({
+    required String token,
+  }) {
+    emit(GetNotificationsLoadingState());
+    DioHelper.getData(url: NOTIFICATIONS, query: {
+      'token': CacheHelper.getData('token'),
+    }).then((value) {
+      notifications = [];
+      notificationModel = NotificationModel.fromJson(value.data);
+      notificationModel!.data!.forEach((element) {
+        notifications.add(element);
+      });
+      emit(GetNotificationsSuccessState());
+    }).catchError((e) {
+      emit(GetNotificationsErrorState());
       print(e.toString());
     });
   }

@@ -1,4 +1,5 @@
 import 'package:carousel_slider/carousel_slider.dart';
+import 'package:conditional_builder_null_safety/conditional_builder_null_safety.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_iconly/flutter_iconly.dart';
@@ -21,7 +22,6 @@ class BillsScreen extends StatelessWidget {
         }
       },
       builder: (context, state) {
-        List<TextEditingController> QtyControllers = [];
         return RefreshIndicator(
           child: SingleChildScrollView(
             physics: BouncingScrollPhysics(),
@@ -32,9 +32,12 @@ class BillsScreen extends StatelessWidget {
                 ListView.separated(
                   shrinkWrap: true,
                   physics: BouncingScrollPhysics(),
-                  itemBuilder: (context, index) => buildBillRow(),
-                  separatorBuilder: (context, index) => SizedBox(height: 5,),
-                  itemCount: 200,
+                  itemBuilder: (context, index) =>
+                      buildBillRow(MezaAppCubit.get(context).orders[index]),
+                  separatorBuilder: (context, index) => SizedBox(
+                    height: 5,
+                  ),
+                  itemCount: MezaAppCubit.get(context).orders.length,
                 ),
               ],
             ),
@@ -48,70 +51,63 @@ class BillsScreen extends StatelessWidget {
     );
   }
 
-  Widget buildProductRow() => Card(
-    child: Padding(
-      padding: EdgeInsets.all(10),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Row(
-            children: [
-              Text('قيمة الفاتورة'),
-              Spacer(),
-              Text('تاريخ الفاتورة'),
-            ],
-          ),
-          Row(
-            children: [
-              Text('نوع الفاتورة'),
-              Spacer(),
-              Text('حالتها'),
-            ],
-          ),
-        ],
-      ),
-    ),
-  );
-  Widget buildBillRow() => Container(
-    child: Card(
-      child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 10),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            Expanded(
-              child: Column(
-                children: [
-                  Row(
+  Widget buildBillRow(order) => Container(
+        child: Card(
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: 10),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                Expanded(
+                  child: Column(
                     children: [
-                      Text('قيمة الفاتورة'),
-                      Spacer(),
-                      Text('تاريخ الفاتورة'),
+                      Row(
+                        children: [
+                          Text('${order.totalCost} ج م '),
+                          Spacer(),
+                          Text('تاريخ : ${order.date}'),
+                        ],
+                      ),
+                      ConditionalBuilder(
+                        condition: order.status == 0,
+                        builder: (context) => Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            Text('في انتظار الموافقة'),
+                          ],
+                        ),
+                        fallback: (context) => ConditionalBuilder(
+                            condition: order.status == 1,
+                            builder: (context) => Row(
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  children: [
+                                    Text('في الطريق اليك'),
+                                  ],
+                                ),
+                            fallback: (context) => Row(
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  children: [
+                                    Text('تم التوصيل'),
+                                  ],
+                                )),
+                      ),
                     ],
                   ),
-                  Row(
-                    children: [
-                      Text('نوع الفاتورة'),
-                      Spacer(),
-                      Text('حالتها'),
-                    ],
+                ),
+                Container(
+                  margin: EdgeInsets.all(5),
+                  child: CircleAvatar(
+                    radius: 40,
+                    backgroundColor: HexColor('129399'),
+                    child: Text(
+                      '${order.id}',
+                      style: TextStyle(color: Colors.white),
+                    ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-            Container(
-              margin: EdgeInsets.all(5),
-              child: CircleAvatar(
-                radius: 40,
-                backgroundColor: HexColor('129399'),
-                child: Text('الرقم',style: TextStyle(
-                    color: Colors.white
-                ),),
-              ),
-            ),
-          ],
+          ),
         ),
-      ),
-    ),
-  );
+      );
 }

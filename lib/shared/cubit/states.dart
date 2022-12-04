@@ -45,5 +45,13 @@ class CheckOutLoadingState extends MezaAppStates{}
 class CheckOutSuccessState extends MezaAppStates{}
 class CheckOutErrorState extends MezaAppStates{}
 
+class GetNotificationsLoadingState extends MezaAppStates{}
+class GetNotificationsSuccessState extends MezaAppStates{}
+class GetNotificationsErrorState extends MezaAppStates{}
+
+
+class GetStoreImageSuccessState extends MezaAppStates{}
+class GetStoreImageErrorState extends MezaAppStates{}
+
 
 class AppChangeBottomSheetState extends MezaAppStates{}

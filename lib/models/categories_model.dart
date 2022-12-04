@@ -33,19 +33,31 @@ class Products {
   String? description;
   var price;
   int? categoryId;
+  String? category_name;
+  String? brand_name;
   int? brandId;
-  int? priceDiscount;
-  int? discount;
-  int? isPrecent;
+  String? mainMeasure;
+  int? mainQuantity;
+  String? subMeasure;
+  int? subQuantity;
+  var priceDiscount;
+  var discount;
+  var isPrecent;
   String? image;
 
   Products.fromJson(Map<String, dynamic> json) {
     id = json['id'];
     name = json['name'];
     description = json['description'];
+    brand_name = json['brand_name'];
+    category_name = json['category_name'];
     price = json['price'];
     categoryId = json['category_id'];
     brandId = json['brand_id'];
+    mainMeasure = json['main_measure'];
+    mainQuantity = json['main_quantity'];
+    subMeasure = json['sub_measure'];
+    subQuantity = json['sub_quantity'];
     priceDiscount = json['priceDiscount'];
     discount = json['discount'];
     isPrecent = json['is_precent'];

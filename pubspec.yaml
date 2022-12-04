@@ -51,6 +51,11 @@ dependencies:
   badges: ^2.0.3
   flutter_launcher_icons: ^0.10.0
   sizer: ^2.0.15
+  convex_bottom_bar: ^3.1.0+1
+  image_picker: ^0.8.6
+  http: ^0.13.5
+  path: ^1.8.2
+  file_picker: ^5.2.3
 
 
 
